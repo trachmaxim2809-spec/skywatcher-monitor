@@ -2,87 +2,48 @@
 <html>
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SkyWatcher Tactical</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <title>SkyWatcher Map</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #05070a;
-        }
-
         #map {
             height: 100vh;
-            width: 100vw;
-            background: #05070a;
+            width: 100%;
+            background: #0b0d0f;
         }
 
-        /* Темная тема для карты */
-        .leaflet-tile-pane {
-            filter: invert(100%) hue-rotate(180deg) brightness(40%) contrast(130%);
-        }
-
-        /* Стиль для пульсирующих кружочков */
-        .pulse {
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 0 0 rgba(255, 255, 255, 0.4);
-            animation: pulse-white 2s infinite;
-        }
-
-        @keyframes pulse-white {
-            0% {
-                box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
-            }
-
-            70% {
-                box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
-            }
-
-            100% {
-                box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
-            }
+        body {
+            margin: 0;
         }
     </style>
 </head>
 
 <body>
     <div id="map"></div>
-
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
+        // Инициализация карты
+        var map = L.map('map').setView([48.3794, 31.1656], 6);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
 
-        var map = L.map('map', {
-            zoomControl: false,
-            center: [48.3794, 31.1656],
-            zoom: 6
-        });
+        // Настройка Firebase
+        const firebaseConfig = { databaseURL: "https://skywatcher-e6b95-default-rtdb.europe-west1.firebasedatabase.app/" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database().ref('targets');
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        // Слушаем новые цели
+        db.on('child_added', (snapshot) => {
+            const data = snapshot.val();
+            let color = data.type === 'shahed' ? 'white' : (data.type === 'missile' ? 'red' : 'blue');
 
-        // Функция для создания кружочка
-        function addTarget(lat, lng, color, label) {
-            L.circleMarker([lat, lng], {
-                radius: 8,
+            L.circle([data.lat, data.lng], {
+                color: color,
                 fillColor: color,
-                color: "#fff",
-                weight: 2,
-                opacity: 1,
-                fillOpacity: 0.8,
-                className: 'pulse' // Добавляем анимацию
-            }).addTo(map).bindPopup(label);
-        }
-
-        // ПРИМЕРЫ (потом будем получать эти данные из бота)
-        addTarget(50.45, 30.52, "#ffffff", "⚪ БПЛА: Киев");     // Белый - Шахед
-        addTarget(48.46, 35.04, "#ff0000", "🔴 РАКЕТА: Днепр");   // Красный - Ракета
-        addTarget(46.48, 30.72, "#00ccff", "🔵 ПВО: Одесса");    // Синий - Работа ПВО
-
+                fillOpacity: 0.5,
+                radius: 15000
+            }).addTo(map).bindPopup(data.type.toUpperCase());
+        });
     </script>
 </body>
 
