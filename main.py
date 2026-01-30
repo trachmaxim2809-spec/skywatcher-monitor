@@ -4,13 +4,13 @@ from aiogram.filters import Command
 from aiogram.types import WebAppInfo
 
 # --- НАСТРОЙКИ ---
-TOKEN = "8305017709:AAH4MkhV4rDzN3jOI0qZTyFHGWed7jWzZOU" # Возьми свежий в @BotFather
-# ID стикеров (узнай их через @idstickersbot после создания пака)
-STICKER_SHAHED = "t.me/addstickers/tyrwwww" 
+TOKEN = "8305017709:AAH4MkhV4rDzN3jOI0qZTyFHGWed7jWzZOU"
 
-# Адрес твоей будущей карты (пока заглушка)
-MAP_URL = "https://google.com" 
+# Ссылка БЕЗ пробелов в начале
+MAP_URL = "https://trachmaxim2809-spec.github.io/skywatcher-monitor/"
 
+# Если хочешь, чтобы бот не падал из-за стикера, пока оставь так:
+STICKER_ID = None
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
@@ -41,7 +41,12 @@ async def start_handler(message: types.Message):
     ])
 
     await message.answer(text=text, parse_mode="HTML", reply_markup=markup)
-
+# Этот обработчик будет ловить любой присланный стикер и писать его ID
+@dp.message(lambda message: message.sticker)
+async def get_sticker_id(message: types.Message):
+    sticker_id = message.sticker.file_id
+    print(f"\n🎯 ID ТВОЕГО СТИКЕРА: {sticker_id}\n")
+    await message.answer(f"ID этого стикера:\n<code>{sticker_id}</code>", parse_mode="HTML")
 async def main():
     print("--- Бот SkyWatcher запущен успешно! ---")
     print("Ожидание команд от пользователей...")
