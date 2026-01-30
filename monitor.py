@@ -5,9 +5,9 @@ import json
 from telethon import TelegramClient, events
 
 # --- НАСТРОЙКИ ---
-API_ID = 23971253  # Твой API ID
-API_HASH = 'твой_апи_хэш'
-GEMINI_KEY = "ТВОЙ_GEMINI_API_KEY" # ВСТАВЬ СЮДА КЛЮЧ
+API_ID = 38505616  # Твой API ID
+API_HASH = '1c0397c2337a6e1eb93818e884258edb'
+GEMINI_KEY = "AIzaSyBwEX3JAQ1zi6-nvDuV-Z5A3sbtEy_ZYVM" # ВСТАВЬ СЮДА КЛЮЧ
 FIREBASE_URL = "https://skywatcher-e6b95-default-rtdb.europe-west1.firebasedatabase.app/targets.json"
 
 # Настройка Gemini
@@ -53,4 +53,5 @@ async def main():
     await client.run_until_disconnected()
 
 if __name__ == '__main__':
+
     asyncio.run(main())
