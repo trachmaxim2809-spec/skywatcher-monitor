@@ -29,18 +29,20 @@ client = TelegramClient('skywatcher_session', API_ID, API_HASH)
 
 async def get_coords_from_gemini(text):
     prompt = f"""
-    Анализ: "{text}"
-    Найди город и область Украины. Верни ответ ТОЛЬКО в формате JSON:
+    Текст: "{text}"
+    Если в тексте есть угроза (шахед, ракета), выдели город и область.
+    Верни ТОЛЬКО JSON:
     {{
-      "lat": 50.4, 
-      "lng": 30.5, 
-      "type": "shahed", 
-      "city": "Киев", 
-      "region": "Київська"
+      "lat": широта, 
+      "lng": долгота, 
+      "type": "missile", 
+      "city": "Название города", 
+      "region": "Название области на англ"
     }}
-    Область пиши строго на украинском + "ська" (напр. Вінницька, Львівська, Одеська). 
-    Если города нет, верни {{"lat": null}}.
+    Области пиши строго так: Kyiv, Odesa, Mykolaiv, Kharkiv, Dnipropetrovsk, Kherson, Lviv, Zaporizhzhia, Chernihiv, Sumy.
+    Если это просто текст без угрозы, верни {{"lat": null}}.
     """
+    # ... (остальной код функции без изменений)
     try:
         response = await asyncio.to_thread(model.generate_content, prompt)
         res_text = response.text.strip()
