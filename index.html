@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <title>SkyWatcher Map</title>
+    <title>SkyWatcher Live Map</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
@@ -23,26 +23,54 @@
 <body>
     <div id="map"></div>
     <script>
-        // Инициализация карты
         var map = L.map('map').setView([48.3794, 31.1656], 6);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
 
-        // Настройка Firebase
+        // Firebase
         const firebaseConfig = { databaseURL: "https://skywatcher-e6b95-default-rtdb.europe-west1.firebasedatabase.app/" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database().ref('targets');
 
-        // Слушаем новые цели
+        let regionLayers = {}; // Тут храним слои областей
+
+        // Загружаем границы областей Украины
+        fetch('https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/regions/pays-de-la-loire/communes-pays-de-la-loire.geojson')
+        // Примечание: выше пример, для Украины лучше использовать этот проверенный URL:
+        fetch('https://raw.githubusercontent.com/wmgeolab/geoBoundaries/main/releaseData/gbOpen/UKR/ADM1/geoBoundaries-UKR-ADM1.geojson')
+            .then(res => res.json())
+            .then(data => {
+                L.geoJSON(data, {
+                    style: { color: "#444", weight: 1, fillOpacity: 0.1, fillColor: "#000" },
+                    onEachFeature: function (feature, layer) {
+                        // Привязываем слой к названию области (напр. "Kyiv")
+                        let name = feature.properties.shapeName;
+                        regionLayers[name] = layer;
+                    }
+                }).addTo(map);
+            });
+
+        // Когда прилетает цель
         db.on('child_added', (snapshot) => {
             const data = snapshot.val();
-            let color = data.type === 'shahed' ? 'white' : (data.type === 'missile' ? 'red' : 'blue');
 
-            L.circle([data.lat, data.lng], {
-                color: color,
-                fillColor: color,
-                fillOpacity: 0.5,
-                radius: 15000
-            }).addTo(map).bindPopup(data.type.toUpperCase());
+            // 1. Рисуем кружок (как раньше)
+            let color = data.type === 'shahed' ? 'white' : 'red';
+            L.circle([data.lat, data.lng], { color: color, radius: 20000 }).addTo(map);
+
+            // 2. Подсвечиваем область
+            if (data.region) {
+                // Ищем слой области (нужно совпадение имен из GeoJSON)
+                for (let key in regionLayers) {
+                    if (key.includes(data.region) || data.region.includes(key)) {
+                        regionLayers[key].setStyle({ fillColor: 'red', fillOpacity: 0.4 });
+
+                        // Гасим область через 10 минут
+                        setTimeout(() => {
+                            regionLayers[key].setStyle({ fillColor: '#000', fillOpacity: 0.1 });
+                        }, 600000);
+                    }
+                }
+            }
         });
     </script>
 </body>
